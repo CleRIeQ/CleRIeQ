@@ -1,0 +1,434 @@
+import vk_api, vk
+from vk_api.keyboard import VkKeyboard, VkKeyboardColor
+from vk_api.utils import get_random_id
+from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
+import random
+import threading
+import wikipedia
+import vkbd
+from vkbd import money
+
+authorize = vk_api.VkApi(token='ad6d1569fcd231ba7bb3af6d021144dc81a88d186f7b18b76fd5f0016a0ff5448c1ca33d649a2789b6975')
+getting_api = authorize.get_api()
+vk = authorize.get_api()
+longpoll = VkBotLongPoll(authorize, group_id=206090038)
+wikipedia.set_lang("Ru")
+
+cooldown = 5
+uns = money
+max_counts = 10
+count = 1
+
+print("██████╗░░█████╗░████████╗"
+    "\n██╔══██╗██╔══██╗╚══██╔══╝"
+    "\n██████╦╝██║░░██║░░░██║░░░"
+    "\n██╔══██╗██║░░██║░░░██║░░░"
+    "\n██████╦╝╚█████╔╝░░░██║░░░"
+    "\n╝╚═╝░░╚═╝╚═════╝░░╚════╝░")
+
+
+def write_message(sender, message):
+    authorize.method('messages.send', {'chat_id': sender, 'message': message, "random_id": get_random_id()})
+
+
+def take_name(from_id):
+    if from_id > 0:
+        sender_info = getting_api.users.get(user_ids=from_id)[0]
+        full_name = sender_info.get('first_name') + ' ' + sender_info['last_name']
+        return full_name
+
+
+def take_only_first_name(with_id):
+    if with_id > 0:
+        mes_sender = getting_api.users.get(user_ids=with_id)[0]
+        first_name_only = mes_sender.get('first_name')
+        return first_name_only
+
+
+def get_gender(from_id):
+    if from_id > 0:
+        sinfo = vk.users.get(user_ids=from_id, fields='sex')[0]
+        sex = sinfo.get('sex')
+        if sex == 1:
+            sex = "Женщина"
+        elif sex == 2:
+            sex = "Мужчина"
+        else:
+            sex = "Не определенно или скрыто"
+        return str(sex)
+
+
+def get_years(from_id):
+    if from_id > 0:
+        Yinfo = vk.users.get(user_ids=from_id, fields='bdate')[0]
+        years = Yinfo.get('bdate')
+        if years is None:
+            return "Скрыта"
+        else:
+            return str(years)
+
+
+def get_closed(from_id):
+    if from_id > 0:
+        close = vk.users.get(user_ids=from_id, fields='is_closed')[0]['is_closed']
+        if close is False:
+            return "Открытый"
+        elif close is True:
+            return "Закрытый"
+        else:
+            print("Опять все пошло по не тому месту....")
+
+
+def talking():
+    for event in longpoll.listen():
+        if event.type == VkBotEventType.MESSAGE_NEW and event.from_chat and event.message.get('text') != "":
+
+            sender = event.chat_id
+            td = event.object.message['from_id']
+            msg = event.message.text
+
+        kd_info = VkKeyboard(one_time=False, inline=True)
+        kd_info.get_empty_keyboard()
+        kd_info.add_button('♦Информация о боте♦', color=VkKeyboardColor.POSITIVE)
+        kd_info.add_button('♦info об игре "bones♦"', color=VkKeyboardColor.POSITIVE)
+
+        shop = VkKeyboard(one_time=False, inline=True)
+        shop.get_empty_keyboard()
+        shop.add_button('♦Автомобили♦', color=VkKeyboardColor.POSITIVE)
+        shop.add_button('♦Питомцы♦', color=VkKeyboardColor.POSITIVE)
+        shop.add_button('♦Дома-Квартиры♦', color=VkKeyboardColor.POSITIVE)
+        shop.add_line()
+        shop.add_button('♦Бизнесы♦', color=VkKeyboardColor.POSITIVE)
+
+        kd_games = VkKeyboard(one_time=False, inline=True)
+        kd_games.get_empty_keyboard()
+        kd_games.add_button('♦Кости♦', color=VkKeyboardColor.POSITIVE)
+
+        keyboard = VkKeyboard(one_time=False)
+        keyboard.add_button('♦Игры♦', color=VkKeyboardColor.SECONDARY)
+        keyboard.add_button('♦Баланс♦', color=VkKeyboardColor.SECONDARY)
+        keyboard.add_line()
+        keyboard.add_button('♦Профиль♦', color=VkKeyboardColor.PRIMARY)
+        keyboard.add_button('♦Информация♦', color=VkKeyboardColor.PRIMARY)
+        keyboard.add_line()
+        keyboard.add_button('♦Магазин♦', color=VkKeyboardColor.PRIMARY)
+        keyboard.add_button('♦Работы♦', color=VkKeyboardColor.PRIMARY)
+        keyboard.add_line()
+        keyboard.add_button('♦Википедия♦', color=VkKeyboardColor.PRIMARY)
+
+        job = VkKeyboard(inline=True, one_time=False)
+        job.get_empty_keyboard()
+        job.add_button('♦Уборщик♦', color=VkKeyboardColor.POSITIVE)
+
+        avto = VkKeyboard(inline=True, one_time=False)
+        avto.get_empty_keyboard()
+        avto.add_button('♦Жигули♦', color=VkKeyboardColor.POSITIVE)
+
+        yes_no = VkKeyboard(inline=True, one_time=False)
+        yes_no.get_empty_keyboard()
+        yes_no.add_button('♦Купить жигули♦', VkKeyboardColor.POSITIVE)
+        yes_no.add_button('♦Отказаться♦', VkKeyboardColor.NEGATIVE)
+
+        def roll_50():
+            global uns
+            c1 = 0.5
+            bet = uns * c1
+            dice = (random.randrange(1, 7) + random.randrange(1, 7))
+            write_message(sender, "Выпало " + str(dice))
+            if dice == 7 or dice == 11 or dice == 4:
+                vkbd.uns = uns + bet
+                write_message(sender, take_only_first_name(with_id=td) + ", вы выйграли!")
+                write_message(sender, 'Баланс: ' + str(uns))
+            elif dice == 2 or dice == 3 or dice == 12 or dice == 5:
+                uns = uns - bet
+                write_message(sender, take_only_first_name(with_id=td) + ", вы проиграли!")
+                write_message(sender, 'Баланс: ' + str(uns))
+            else:
+                write_message(sender, take_only_first_name(with_id=td) + ", уходим в ноль!")
+                write_message(sender, 'Баланс: ' + str(uns))
+
+        def null_count():
+            global count
+            count = 1
+            vk.messages.send(
+                chat_id=event.chat_id,
+                random_id=get_random_id(),
+                message="⚡Ты отдохнул, и можешь продолжать работать!⚡"
+            )
+
+        def job_get_money(from_id):
+            global uns
+            if from_id > 0:
+                global count
+                if count == max_counts:
+                    t = threading.Timer(300.0, null_count)
+                    t.start()
+                    return "Ты устал, иди передохни 5 минут."
+                else:
+                    uns += 35000
+                    vkbd.job_upd_balance(vkID=td, Balance=uns)
+                    count += 1
+                    return "+35000 uns \n Баланс: " + str(uns)
+
+        nameinfo = getting_api.users.get(user_ids=td)[0]
+        fname = nameinfo.get('first_name')  # Имя
+        lname = nameinfo.get('last_name')  # фамилия
+        vkid = event.object.message['from_id']
+
+        vkbd.add_one_record_to_users(fname, lname, vkid)
+        fwd = event.object.message
+
+        def minus_money_car(from_id):
+            global uns
+            if from_id > 0:
+                if "♦Купить жигули♦" in str(event):
+                    if event.from_chat:
+                        car = "lada"
+                        if car == "lada":
+                            price = 300000
+                            if uns == 0 or uns < price:
+                                return "Не хватат денег :c"
+                            else:
+                                uns -= price
+                                vkbd.job_upd_balance(vkID=td, Balance=uns)
+                                return "\n -" + str(price) + " uns \n Баланс: " + str(uns)
+
+        if "!kick" in str(event):
+            td = event.object.message['from_id']
+            if event.from_chat:
+                if td == 573881719:
+                    vk.messages.removeChatUser(chat_id=event.chat_id,
+                                               user_id=event.message.reply_message['from_id'])
+                else:
+                    print("continue")
+                    continue
+
+        if 'reply_message' in fwd:
+            continue
+        else:
+            if "!Клавиатура" in str(event):
+                if event.from_chat:
+                    vk.messages.send(
+                        keyboard=keyboard.get_keyboard(),
+                        key=('0a9252b579c0fdd123198f6070832ebb34f16f38'),
+                        server=('https://lp.vk.com/wh206090038'),
+                        ts=('64'),
+                        random_id=get_random_id(),
+                        message="Ну допустим *тык*",
+                        chat_id=event.chat_id
+                    )
+
+            if "!stop" in str(event):
+                td = event.object.message['from_id']
+                if event.from_chat:
+                    if td == 573881719:
+                        vkbd.job_upd_balance(vkID=td, Balance=uns)
+                        break
+                    else:
+                        print("continue")
+                        continue
+
+            if "♦Профиль♦" in str(event):
+                td = event.object.message['from_id']
+                if event.from_chat:
+                    vk.messages.send(
+                        keyboard=keyboard.get_keyboard(),
+                        key=('0a9252b579c0fdd123198f6070832ebb34f16f38'),
+                        server=('https://lp.vk.com/wh206090038'),
+                        ts=('64'),
+                        random_id=get_random_id(),
+                        message=take_only_first_name(with_id=td)+ ' - ваш профиль: '
+                        '\n Полное имя: ' + take_name(from_id=td) +
+                        '\n id: '+ str(td) + "\n Пол: " + get_gender(from_id=td) + '\n Дата рождения: ' + get_years(from_id=td) + "\n Состояние профиля: " + get_closed(from_id=td),
+                        chat_id=event.chat_id
+                    )
+
+            if "♦Википедия♦" in str(event):
+                if event.from_chat:
+                    vk.messages.send(
+                        keyboard=keyboard.get_keyboard(),
+                        key=('0a9252b579c0fdd123198f6070832ebb34f16f38'),
+                        server=('https://lp.vk.com/wh206090038'),
+                        ts=('64'),
+                        random_id=get_random_id(),
+                        message="Что-бы воспользоваться википедией напиши '!Википедия запрос'.",
+                        chat_id=event.chat_id
+                    )
+
+            if '♦Информация♦' in str(event):
+                if event.from_chat:
+                    td = event.object.message['from_id']
+                    vk.messages.send(
+                        keyboard=kd_info.get_keyboard(),
+                        key=('0a9252b579c0fdd123198f6070832ebb34f16f38'),
+                        server=('https://lp.vk.com/wh206090038'),
+                        ts=('64'),
+                        random_id=get_random_id(),
+                        message='Информация обо всем!',
+                        chat_id=event.chat_id
+                    )
+
+            if '♦Баланс♦' in str(event):
+                if event.from_chat:
+                    td = event.object.message['from_id']
+                    vk.messages.send(
+                        keyboard=keyboard.get_keyboard(),
+                        key=('0a9252b579c0fdd123198f6070832ebb34f16f38'),
+                        server=('https://lp.vk.com/wh206090038'),
+                        ts=('64'),
+                        random_id=get_random_id(),
+                        message='Баланс: ' + str(uns) + ' Юнс',
+                        chat_id=event.chat_id
+                    )
+
+            if '♦Игры♦' in str(event):
+                if event.from_chat:
+                    td = event.object.message['from_id']
+                    vk.messages.send(
+                        keyboard=kd_games.get_keyboard(),
+                        key=('0a9252b579c0fdd123198f6070832ebb34f16f38'),
+                        server=('https://lp.vk.com/wh206090038'),
+                        ts=('64'),
+                        random_id=get_random_id(),
+                        message='Вот список игр:',
+                        chat_id=event.chat_id
+                    )
+
+            if '♦Кости♦' in str(event):
+                if event.from_chat:
+                    roll_50()
+
+            try:
+                if "!Википедия" in str(event):
+                    if event.from_chat:
+                        wiki = msg.replace('.', '').split()
+                        query = wiki[1]
+                        vk.messages.send(
+                            key=('0a9252b579c0fdd123198f6070832ebb34f16f38'),
+                            server=('https://lp.vk.com/wh206090038'),
+                            ts=('64'),
+                            random_id=get_random_id(),
+                            message=wikipedia.summary(query, sentences=0, chars=0, auto_suggest=True, redirect=True) + "\n" + str(wikipedia.page(query).references[0]),
+                            chat_id=event.chat_id
+                        )
+            except vk_api.exceptions.ApiError:
+                vk.messages.send(
+                    key=('0a9252b579c0fdd123198f6070832ebb34f16f38'),
+                    server=('https://lp.vk.com/wh206090038'),
+                    ts=('64'),
+                    random_id=get_random_id(),
+                    message='Слишком много слов. Вк не дает мне это переслать!',
+                    chat_id=event.chat_id
+                )
+            if "♦Информация о боте♦" in str(event):
+                if event.from_chat:
+                    vk.messages.send(
+                        keyboard=kd_info.get_keyboard(),
+                        key=('0a9252b579c0fdd123198f6070832ebb34f16f38'),
+                        server=('https://lp.vk.com/wh206090038'),
+                        ts=('64'),
+                        random_id=get_random_id(),
+                        message='Привет, Этот бот служит для создания "живой" атмосферы в различных беседах, для удобства людей. \n'
+                        'С его помощью можно поиграть в игры, Узнать некоторую информацию о человеке. \n'
+                        'Скорее всего это его конечная версия, возможны небольшие обновления, но в целом он закончен!',
+                        chat_id=event.chat_id
+                    )
+
+            if '♦info об игре "Кости"♦' in str(event):
+                if event.from_chat:
+                    vk.messages.send(
+                        keyboard=kd_info.get_keyboard(),
+                        key=('0a9252b579c0fdd123198f6070832ebb34f16f38'),
+                        server=('https://lp.vk.com/wh206090038'),
+                        ts=('64'),
+                        random_id=get_random_id(),
+                        message='Игра кости- Это немного измененная версия игры "Craps", в которую играют в майских казино. \n Правила:'
+                        '\n Бросается 2 шестигранных кубика, их значения складываются, и если сумма кубиков равна 7 или 11 или же 4 вы выигрываете. \n'
+                        'Но если сумма равна 2, 3, 5, 12 то вы проигрываете. А если же ни одно из этих чисел, то получается "ничья" или же уход в ноль.',
+                        chat_id=event.chat_id
+                    )
+
+            if '♦Магазин♦' in str(event):
+                if event.from_chat:
+                    vk.messages.send(
+                        keyboard=shop.get_keyboard(),
+                        key=('0a9252b579c0fdd123198f6070832ebb34f16f38'),
+                        server=('https://lp.vk.com/wh206090038'),
+                        ts=('64'),
+                        random_id=get_random_id(),
+                        message='За мороженкой?',
+                        chat_id=event.chat_id
+                    )
+
+            if "♦Работы♦" in str(event):
+                if event.from_chat:
+                    vk.messages.send(
+                        keyboard=job.get_keyboard(),
+                        key=('0a9252b579c0fdd123198f6070832ebb34f16f38'),
+                        server=('https://lp.vk.com/wh206090038'),
+                        ts=('64'),
+                        random_id=get_random_id(),
+                        message='Опять на работу... :c',
+                        chat_id=event.chat_id
+                    )
+
+            if "♦Уборщик♦" in str(event):
+                if event.from_chat:
+                    global count
+                    vk.messages.send(
+                        keyboard=job.get_keyboard(),
+                        key=('0a9252b579c0fdd123198f6070832ebb34f16f38'),
+                        server=('https://lp.vk.com/wh206090038'),
+                        ts=('64'),
+                        random_id=get_random_id(),
+                        message="Пол помыт! " + str(count) + "/10 \n " + job_get_money(from_id=td),
+                        chat_id=event.chat_id
+                    )
+
+            if "♦Отказаться♦" in str(event):
+                if event.from_chat:
+                    vk.messages.send(
+                        key=('0a9252b579c0fdd123198f6070832ebb34f16f38'),
+                        server=('https://lp.vk.com/wh206090038'),
+                        ts=('64'),
+                        random_id=get_random_id(),
+                        message="Окей :c",
+                        chat_id=event.chat_id
+                    )
+
+            if "♦Купить жигули♦" in str(event):
+                if event.from_chat:
+                    vk.messages.send(
+                        key=('0a9252b579c0fdd123198f6070832ebb34f16f38'),
+                        server=('https://lp.vk.com/wh206090038'),
+                        ts=('64'),
+                        random_id=get_random_id(),
+                        message="-> ",
+                        chat_id=event.chat_id
+                    )
+
+            if "♦Автомобили♦" in str(event):
+                if event.from_chat:
+                    vk.messages.send(
+                        keyboard=avto.get_keyboard(),
+                        key=('0a9252b579c0fdd123198f6070832ebb34f16f38'),
+                        server = ('https://lp.vk.com/wh206090038'),
+                        ts=('64'),
+                        random_id=get_random_id(),
+                        message="*Дрын-дрын*",
+                        chat_id=event.chat_id
+                    )
+            if "♦Жигули♦" in str(event):
+                if event.from_chat:
+                    vk.messages.send(
+                        keyboard=yes_no.get_keyboard(),
+                        key=('0a9252b579c0fdd123198f6070832ebb34f16f38'),
+                        server=('https://lp.vk.com/wh206090038'),
+                        ts=('64'),
+                        random_id=get_random_id(),
+                        message="Полетим на второй космической!",
+                        chat_id=event.chat_id
+                    )
+
+
+talking()
