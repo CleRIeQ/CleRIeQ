@@ -8,7 +8,7 @@ import wikipedia
 import vkbd
 from vkbd import money
 
-authorize = vk_api.VkApi(token='ad6d1569fcd231ba7bb3af6d021144dc81a88d186f7b18b76fd5f0016a0ff5448c1ca33d649a2789b6975')
+authorize = vk_api.VkApi(token='ad6d1569fcd231ba7bb3af6d021144dc81a8016a0ff5448c1ca33d649a2789b6975')
 getting_api = authorize.get_api()
 vk = authorize.get_api()
 longpoll = VkBotLongPoll(authorize, group_id=206090038)
