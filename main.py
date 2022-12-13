@@ -403,5 +403,5 @@ def talking():
                         message=STATIC_MESSAGES["cars__lada"],
                         chat_id=event.chat_id
                     )
-
+#
 talking()
